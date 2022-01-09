@@ -50,12 +50,12 @@ jobs:
       - name: build-zip
         run: |
           mkdir output
-          mv build/arch/arm64/boot/Image output/
-          rm build/pack/lib/modules/5*/build
-          rm build/pack/lib/modules/5*/source
-          mv build/pack/lib/modules output/
-          mv build/pack/dtbs/5*/rockchip/rk3566-pinenote.dtb output/ || true
-          mv *deb output/
+          cp build/arch/arm64/boot/Image output/
+          rm build/pack/lib/modules/5*/build || true
+          rm build/pack/lib/modules/5*/source || true
+          cp build/pack/lib/modules output/
+          cp build/pack/dtbs/5*/rockchip/rk3566-pinenote.dtb output/ || true
+          cp *deb output/
           cd output && zip ../release.zip -r *
       - name: create-release
         uses: actions/create-release@v1

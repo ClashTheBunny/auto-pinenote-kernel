@@ -57,9 +57,6 @@ jobs:
           mv build/pack/dtbs/5*/rockchip/rk3566-pinenote.dtb output/
           mv *deb output/
           cd output && zip ../release.zip -r *
-      - name: sams-version
-        run: echo "::set-output name=version::$(cd linux/; git rev-parse --short HEAD)"
-        id: version
       - name: create-release
         uses: actions/create-release@v1
         id: create_release

@@ -1,5 +1,7 @@
 name: base
-on: [push]
+on:
+  workflow_dispatch:
+  push:
 jobs:
   do-the-thing:
     runs-on: ubuntu-latest

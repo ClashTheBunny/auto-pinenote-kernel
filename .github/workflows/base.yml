@@ -28,6 +28,8 @@ jobs:
         working-directory: ./linux
       - run: make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_PATH=${PWD}/pack dtbs_install
         working-directory: ./linux
+      - run: make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- bindeb-pkg
+        working-directory: ./linux
       - name: build-zip
         run: |
           mkdir output
@@ -36,6 +38,7 @@ jobs:
           rm linux/pack/lib/modules/5*/source
           mv linux/pack/lib/modules output/
           mv linux/pack/dtbs/5*/rockchip/rk3566-pinenote.dtb output/
+          mv *deb output/
           cd output && zip ../release.zip -r *
       - name: sams-version
         run: echo "::set-output name=version::$(cd linux/; git rev-parse --short HEAD)"

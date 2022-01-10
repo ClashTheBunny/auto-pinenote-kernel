@@ -8,25 +8,13 @@ jobs:
   do-the-thing:
     runs-on: ubuntu-latest
     steps:
-      # - name: Cache Kernel Source
-      #   id: cache-source
-      #   uses: actions/cache@v2
-      #   with:
-      #     path: |
-      #       linux
-      #       build
-      #     key: ${{ runner.os }}-${{ steps.version.outputs.version }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-
-      # - name: clone
-      #   run: git clone https://github.com/smaeul/linux.git; 
-      #   if: steps.cache-source.outputs.cache-hit != 'true'
-      # - name: switch-branch
-      #   run: git checkout rk356x-ebc-dev
-      #   working-directory: ./linux
-      # - name: fetch
-      #   run: git pull
-      #   working-directory: ./linux
+      - name: enable-sources
+        run: cat /etc/apt/sources.list | sed s/^deb/deb-src/ | sudo tee /etc/apt/sources.list.d/sources.src.list
+      - name: apty-stuff
+        run: |
+          sudo apt update
+          sudo apt build-dep -y linux-base
+          sudo apt install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu git flex bison bc zip jq
       - run: mkdir linux
       - run: curl -L https://github.com/smaeul/linux/archive/refs/heads/rk356x-ebc-dev.tar.gz | tar -zxf - -C linux --strip-components=1
       - run: make -j $(nproc) O=../build/ ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- pinenote_defconfig

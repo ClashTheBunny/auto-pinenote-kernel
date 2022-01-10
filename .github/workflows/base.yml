@@ -7,13 +7,6 @@ jobs:
   check-the-thing:
     runs-on: ubuntu-latest
     steps:
-      - name: enable-sources
-        run: cat /etc/apt/sources.list | sed s/^deb/deb-src/ | sudo tee /etc/apt/sources.list.d/sources.src.list
-      - name: apty-stuff
-        run: |
-          sudo apt update
-          sudo apt build-dep -y linux-base
-          sudo apt install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu git flex bison bc zip jq
       - uses: actions/checkout@v2
         with:
           ssh-key: "${{ secrets.COMMIT_KEY }}"

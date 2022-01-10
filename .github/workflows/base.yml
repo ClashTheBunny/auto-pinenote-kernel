@@ -1,7 +1,6 @@
 name: base
 on:
   workflow_dispatch:
-  push:
   schedule:
     - cron: '0 12 * * *'
 jobs:

@@ -2,8 +2,10 @@ name: base
 on:
   workflow_dispatch:
   push:
+  schedule:
+    - cron: '0 12 * * *'
 jobs:
-  do-the-thing:
+  check-the-thing:
     runs-on: ubuntu-latest
     steps:
       - name: enable-sources
@@ -13,81 +15,25 @@ jobs:
           sudo apt update
           sudo apt build-dep -y linux-base
           sudo apt install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu git flex bison bc zip jq
+      - uses: actions/checkout@v2
+        with:
+          ssh-key: "${{ secrets.COMMIT_KEY }}"
       - name: sams-version
         run: echo "::set-output name=version::$(curl -s -L https://api.github.com/repos/smaeul/linux/git/refs/heads/rk356x-ebc-dev | jq '.object.sha' -r | cut -c 1-7)"
         id: version
-      - name: Cache Kernel Source
-        id: cache-source
-        uses: actions/cache@v2
-        with:
-          path: |
-            linux
-            build
-          key: ${{ runner.os }}-${{ steps.version.outputs.version }}
-          restore-keys: |
-            ${{ runner.os }}-
-      - name: clone
-        run: git clone https://github.com/smaeul/linux.git; 
-        if: steps.cache-source.outputs.cache-hit != 'true'
-      - name: switch-branch
-        run: git checkout rk356x-ebc-dev
-        working-directory: ./linux
-      - name: fetch
-        run: git pull
-        working-directory: ./linux
-      - run: make -j $(nproc) O=../build/ ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- pinenote_defconfig
-        working-directory: ./linux
-      - run: make -j $(nproc) O=../build/ ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- all
-        working-directory: ./linux
-      - run: make -j $(nproc) O=../build/ ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=../build/pack modules_install
-        working-directory: ./linux
-      - run: make -j $(nproc) O=../build/ ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- dtbs
-        working-directory: ./linux
-      - run: make -j $(nproc) O=../build/ ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_PATH=../build/pack dtbs_install
-        working-directory: ./linux
-      - run: make -j $(nproc) O=../build/ ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- bindeb-pkg
-        working-directory: ./linux
-      - name: build-zip
+      - name: Check for update
         run: |
-          mkdir output
-          mv build/arch/arm64/boot/Image output/
-          rm build/pack/lib/modules/5*/build || true
-          rm build/pack/lib/modules/5*/source || true
-          mv build/pack/lib/modules output/
-          mv build/pack/dtbs/5*/rockchip/rk3566-pinenote.dtb output/
-          mv *deb output/
-          cd output && zip ../release.zip -r *
-      - name: create-release
-        uses: actions/create-release@v1
-        id: create_release
-        with:
-          draft: false
-          prerelease: false
-          release_name: ${{ steps.version.outputs.version }}
-          tag_name: ${{ steps.version.outputs.version}}
-          body: "Automated build of smauel's kernel"
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-      - name: Start SSH via Ngrok
-        id: ngrok
-        if: ${{ failure() }}
-        run: curl -sL https://gist.githubusercontent.com/ClashTheBunny/ac7ca189e1f8ab9eb5686662412a4cce/raw/7099b9db76729dc5761da72aa8525f632d8875c9/debug-github-actions.sh | bash
-        env:
-          # After sign up on the https://ngrok.com/
-          # You can find this token here: https://dashboard.ngrok.com/get-started/setup
-          NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
-          # This password you will use when authorizing via SSH
-          USER_PASS: ${{ secrets.USER_PASS }}
-      - name: Sleep 1 hour
-        if: ${{ failure() }}
-        run: sleep 1h
-      - name: upload-release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release.zip
-          asset_name: release.zip
-          asset_content_type: application/zip
-
+          echo ${{ steps.version.outputs.version }} > latest_kernel
+      - name: Commit update if diff
+        run: |
+          git fetch -a
+          git reset --hard origin/main
+          if output=$(git status --porcelain | grep latest_kernel) && [[ -n "${output}" ]]; then
+            git config user.name github-actions
+            git config user.email github-actions@github.com
+            git add latest_kernel
+            git commit -m "auto-bumping kernel"
+            git push
+            git tag v$(cat latest_kernel | cut -d _ -f 2 | tr -d ' ~^:?*[\\')
+            git push --tags
+          fi

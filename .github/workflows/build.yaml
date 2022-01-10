@@ -9,39 +9,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        with:
-          ssh-key: "${{ secrets.COMMIT_KEY }}"
-      # - name: enable-sources
-      #   run: cat /etc/apt/sources.list | sed s/^deb/deb-src/ | sudo tee /etc/apt/sources.list.d/sources.src.list
-      # - name: apty-stuff
-      #   run: |
-      #     sudo apt update
-      #     sudo apt build-dep -y linux-base
-      #     sudo apt install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu git flex bison bc zip jq
-      # - run: mkdir linux
-      # - run: curl -L https://github.com/smaeul/linux/archive/refs/heads/rk356x-ebc-dev.tar.gz | tar -zxf - -C linux --strip-components=1
-      # - run: make -j $(nproc) O=../build/ ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- pinenote_defconfig
-      #   working-directory: ./linux
-      # - run: make -j $(nproc) O=../build/ ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- all
-      #   working-directory: ./linux
-      # - run: make -j $(nproc) O=../build/ ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=../build/pack modules_install
-      #   working-directory: ./linux
-      # - run: make -j $(nproc) O=../build/ ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- dtbs
-      #   working-directory: ./linux
-      # - run: make -j $(nproc) O=../build/ ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_PATH=../build/pack dtbs_install
-      #   working-directory: ./linux
-      # - run: make -j $(nproc) O=../build/ ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- bindeb-pkg
-      #   working-directory: ./linux
-      # - name: build-zip
-      #   run: |
-      #     mkdir output
-      #     mv build/arch/arm64/boot/Image output/
-      #     rm build/pack/lib/modules/5*/build || true
-      #     rm build/pack/lib/modules/5*/source || true
-      #     mv build/pack/lib/modules output/
-      #     mv build/pack/dtbs/5*/rockchip/rk3566-pinenote.dtb output/
-      #     mv *deb output/
-      #     cd output && zip ../release.zip -r *
+      - name: enable-sources
+        run: cat /etc/apt/sources.list | sed s/^deb/deb-src/ | sudo tee /etc/apt/sources.list.d/sources.src.list
+      - name: apty-stuff
+        run: |
+          sudo apt update
+          sudo apt build-dep -y linux-base
+          sudo apt install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu git flex bison bc zip jq
+      - run: mkdir linux
+      - run: curl -L https://github.com/smaeul/linux/archive/refs/heads/rk356x-ebc-dev.tar.gz | tar -zxf - -C linux --strip-components=1
+      - run: make -j $(nproc) O=../build/ ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- pinenote_defconfig
+        working-directory: ./linux
+      - run: make -j $(nproc) O=../build/ ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- all
+        working-directory: ./linux
+      - run: make -j $(nproc) O=../build/ ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=../build/pack modules_install
+        working-directory: ./linux
+      - run: make -j $(nproc) O=../build/ ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- dtbs
+        working-directory: ./linux
+      - run: make -j $(nproc) O=../build/ ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_PATH=../build/pack dtbs_install
+        working-directory: ./linux
+      - run: make -j $(nproc) O=../build/ ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- bindeb-pkg
+        working-directory: ./linux
+      - name: build-zip
+        run: |
+          mkdir output
+          mv build/arch/arm64/boot/Image output/
+          rm build/pack/lib/modules/5*/build || true
+          rm build/pack/lib/modules/5*/source || true
+          mv build/pack/lib/modules output/
+          mv build/pack/dtbs/5*/rockchip/rk3566-pinenote.dtb output/
+          mv *deb output/
+          cd output && zip ../release.zip -r *
       - name: fake-output
         run: touch release.zip
       - name: sams-version

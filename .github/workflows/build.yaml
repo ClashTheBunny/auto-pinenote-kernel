@@ -27,6 +27,7 @@ jobs:
       # - name: fetch
       #   run: git pull
       #   working-directory: ./linux
+      - run: mkdir linux
       - run: curl -L https://github.com/smaeul/linux/archive/refs/heads/rk356x-ebc-dev.tar.gz | tar -zxf - -C linux --strip-components=1
       - run: make -j $(nproc) O=../build/ ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- pinenote_defconfig
         working-directory: ./linux
